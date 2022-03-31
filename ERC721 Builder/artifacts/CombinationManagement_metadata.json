@@ -1,0 +1,94 @@
+{
+	"compiler": {
+		"version": "0.8.7+commit.e28d00a7"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "_attributeCounts",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"name": "_comboIndex",
+				"outputs": [
+					{
+						"internalType": "uint32",
+						"name": "count",
+						"type": "uint32"
+					},
+					{
+						"internalType": "uint32",
+						"name": "maxSupply",
+						"type": "uint32"
+					},
+					{
+						"internalType": "bool",
+						"name": "limited",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"ERC721 Builder/CustomERC721.sol": "CombinationManagement"
+		},
+		"evmVersion": "london",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"ERC721 Builder/CustomERC721.sol": {
+			"keccak256": "0x9d2ba79da491065dbd15b160928c04dae3d7dde4a4760c79db7cbf7c8541c249",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://25287c82f1b5720a97e0170e696a7fbce3590b09a91afa59fa7a5235172e910c",
+				"dweb:/ipfs/QmUUcQTLknxB8Kf83hMP1LvNbUmuVs59qPGb4A6TAEZBtA"
+			]
+		}
+	},
+	"version": 1
+}

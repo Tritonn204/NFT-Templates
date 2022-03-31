@@ -1292,26 +1292,107 @@ abstract contract ERC721URIStorage is ERC721 {
     }
 }
 
+contract NFTCombinationManagement {
+    mapping(bytes32 => Combination) public _comboIndex; //Combination management index
+    uint256[] public _attributeCounts; //The amount of versions each trait category has, used for validating trait combos
+
+    struct Combination {
+        uint32 count;
+        uint32 maxSupply;
+        bool limited;
+    }
+    
+    function _setAttributeConstraints(uint256[] memory chosenTraits) internal virtual {
+        _attributeCounts = chosenTraits;
+    }
+
+    
+    function _setCombinationLimit(uint256[] calldata chosenTraits, uint32 limit) internal virtual {
+        bytes32 comboHash = keccak256(abi.encodePacked(chosenTraits));
+
+        _comboIndex[comboHash].limited = true;
+        _comboIndex[comboHash].maxSupply = limit;
+    }
+
+    function _disableCombinationLimit(uint256[] calldata chosenTraits) internal virtual {
+        bytes32 comboHash = keccak256(abi.encodePacked(chosenTraits));
+
+        _comboIndex[comboHash].limited = false;
+    }
+}
+
+//Written by Tritonn in 2021/2022
+//A nifty algorithm for setting up a pool of possible numbers, and selecting them pseudo-randomly
+//Each number in the pool is only ever used once, and the order is not predetermined
+
+/*
+Integrate this by having your contract extend this (ex: "contract Util is ClampedRandomizer {}")
+and instantiating an instance in it's constructor (ex: "constructor(uint256 size) ClampedRandomizer(size)").
+
+The generated results will range from 0-size, and can be acquired by calling _genClampedNonce() in your contract.
+*/
+
+contract ClampedRandomizer {
+    uint256 private _scopeIndex = 0; //Clamping cache for random TokenID generation in the anti-sniping algo
+    uint256 private immutable _scopeCap; //Size of initial randomized number pool & max generated value (zero indexed)
+    mapping(uint256 => uint256) _swappedIDs; //TokenID cache for random TokenID generation in the anti-sniping algo
+
+    constructor(uint256 scopeCap) {
+        _scopeCap = scopeCap;
+    }
+
+    function _genClampedNonce() internal virtual returns(uint256) {
+        uint256 scope = _scopeCap-_scopeIndex;
+        uint256 swap;
+        uint256 result;
+
+        uint256 i = randomNumber() % scope;
+
+        //Setup the value to swap in for the selected number
+        if (_swappedIDs[scope-1] == 0){
+            swap = scope-1;
+        } else {
+            swap = _swappedIDs[scope-1];
+        }
+
+        //Select a random number, swap it out with an unselected one then shorten the selection range by 1
+        if (_swappedIDs[i] == 0){
+            result = i;
+            _swappedIDs[i] = swap;
+        } else {
+            result = _swappedIDs[i];
+            _swappedIDs[i] = swap;
+        }
+        _scopeIndex++;
+        return result;
+    }
+
+    function randomNumber() internal view returns(uint256){
+        return uint256(keccak256(abi.encodePacked(block.difficulty, block.timestamp)));
+    }
+}
+
 /**
  * @title CustomizeableERC721 contract
  * @dev Extends ERC721 Non-Fungible Token Standard basic implementation
  */
-contract CustomizeableERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
+contract CustomizeableERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, NFTCombinationManagement, ClampedRandomizer, Ownable {
     address private _nftBuilder; //The public key of the NFT building/handling backend. Private key must be securely stored by the app
-    string private _baseURIExtended = ""; //URL to placeholder JSON metadata as the true image is built
+    string private _baseURIExtended = ""; //URL for placeholder JSON metadata before the true image is generated
 
-    uint256 private immutable _layerCount; //IMPORTANT! The amount of layers that compose a fully decked instance of this NFT
-
+    //IMPORTANT! NFT generation constraints
+    uint256 private immutable _layerCount; //The amount of layers that compose a fully decked instance of this NFT
+    
     mapping(uint256 => string) private _tokenURIs; //Individual metadata storage for every tokenId
+
+
     uint256 public immutable MAX_Supply; //Max NFT Supply
     uint256 public immutable maxPerTx; //Max allowed mints per transaction
     uint256 public immutable mintsPerWallet; //Max allowed mints per wallet
     uint256 public price; //mint price in wei, can be altered via setPrice()
 
     bool public hasSaleStarted = false; //Pauses/unpauses minting
-    
-    uint256 private scopeIndex = 0; //Clamping cache for random TokenID generation in the anti-sniping algo    
-    mapping(uint256 => uint256) swappedIDs; //TokenID cache for random TokenID generation in the anti-sniping algo
+        
     mapping(address => uint256) userCredit; //Free mint credits tracked here
     mapping(address => uint256) public _mintedAmount; //Storage for how many paid mints a wallet has performed
 
@@ -1327,7 +1408,7 @@ contract CustomizeableERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, Owna
         uint256 mintsPerTx, 
         uint256 layerCount,
         uint256 walletAllowance
-    ) ERC721(name, symbol) {
+    ) ERC721(name, symbol) ClampedRandomizer(supply) {
         MAX_Supply = supply;
         maxPerTx = mintsPerTx;
         mintsPerWallet = walletAllowance;
@@ -1340,6 +1421,18 @@ contract CustomizeableERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, Owna
 
     function setNftBuilder(address newBuilder) public onlyOwner {
         _nftBuilder = newBuilder;
+    }
+
+    function setAttributeConstraints(uint256[] memory chosenTraits) public onlyOwner {
+        _setAttributeConstraints(chosenTraits);
+    }
+
+    function setCombinationLimit(uint256[] calldata chosenTraits, uint32 limit) public onlyOwner {
+        _setCombinationLimit(chosenTraits, limit);
+    }
+
+    function disableCombinationLimit(uint256[] calldata chosenTraits) public onlyOwner {
+        _disableCombinationLimit(chosenTraits);
     }
 
     function setPriceWei(uint256 newPrice) public onlyOwner {
@@ -1366,35 +1459,6 @@ contract CustomizeableERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, Owna
         }
     }
 
-    function genID() private returns(uint256) {
-        uint256 scope = MAX_Supply-scopeIndex;
-        uint256 swap;
-        uint256 result;
-
-        uint256 i = randomNumber() % scope;
-
-        //Setup the value to swap in for the selected ID
-        if (swappedIDs[scope-1] == 0){
-            swap = scope-1;
-        } else {
-            swap = swappedIDs[scope-1];
-        }
-
-        //Select a random ID, swap it out with an unselected one then shorten the selection range by 1
-        if (swappedIDs[i] == 0){
-            result = i;
-            swappedIDs[i] = swap;
-        } else {
-            result = swappedIDs[i];
-            swappedIDs[i] = swap;
-        }
-        return result+1;
-    }
-
-    function randomNumber() private view returns(uint256){
-        return uint256(keccak256(abi.encodePacked(block.difficulty, block.timestamp)));
-    }
-
     function mint(uint256 mintAmount, uint256[] calldata chosenTraits) public payable {
         require(mintAmount > 0);
         require(hasSaleStarted == true, "Minting is not currently enabled");
@@ -1402,13 +1466,19 @@ contract CustomizeableERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, Owna
         require(_mintedAmount[msg.sender] < mintsPerWallet, "mintsPerWallet exceeded");
         require(mintAmount <= maxPerTx, "maxPerTx exceeded");
         require(chosenTraits.length == _layerCount, "Incorrect amount of traits specified");
+
+        bytes32 comboHash = keccak256(abi.encodePacked(chosenTraits));
+
+        if (_comboIndex[comboHash].limited) {
+            require(_comboIndex[comboHash].count + mintAmount <= _comboIndex[comboHash].maxSupply, "the supply of this combination has been exhausted");
+        }
         
         for (uint i = 0; i < mintAmount; i++) {
-            uint256 tokenId = genID();
+            uint256 tokenId = _genClampedNonce() + 1;
             _safeMint(msg.sender, tokenId);
             _traits[tokenId] = chosenTraits;
-            scopeIndex++;
             
+            _comboIndex[comboHash].count += 1;
             emit CustomMint(msg.sender, chosenTraits, tokenId);
         }
     }
@@ -1423,9 +1493,18 @@ contract CustomizeableERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, Owna
         require(totalSupply() < MAX_Supply, "Exceeds MAX_Supply");
         require(userCredit[msg.sender] >= 1, "Not enough Credits");
 
-        uint256 tokenId = genID();
+        require(chosenTraits.length == _layerCount, "Incorrect amount of traits specified");
+
+        bytes32 comboHash = keccak256(abi.encodePacked(chosenTraits));
+
+        if (_comboIndex[comboHash].limited) {
+            require(_comboIndex[comboHash].count < _comboIndex[comboHash].maxSupply, "the supply of this combination has been exhausted");
+        }
+
+        uint256 tokenId = _genClampedNonce() + 1;
         _safeMint(msg.sender, tokenId);
-        scopeIndex++;
+
+        _comboIndex[comboHash].count += 1;
         emit CustomMint(msg.sender, chosenTraits, tokenId);
 
         userCredit[msg.sender] -= 1;
@@ -1456,7 +1535,6 @@ contract CustomizeableERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, Owna
         payable(msg.sender).transfer(address(this).balance);
     }
     
-    //Overrides for ERC721 extensions
     function addCredit(address owner, uint256 credits) public onlyOwner {
         userCredit[owner] += credits;
     }
@@ -1476,18 +1554,13 @@ contract CustomizeableERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, Owna
         require(_exists(tokenId), "ERC721URIStorage: URI query for nonexistent token");
 
         string memory _tokenURI = _tokenURIs[tokenId];
-        string memory base = _baseURI();
 
-        // If there is no base URI, return the token URI.
-        if (bytes(base).length == 0) {
-            return _tokenURI;
-        }
-        // If both are set, concatenate the baseURI and tokenURI (via abi.encodePacked).
-        if (bytes(_tokenURI).length > 0) {
-            return string(abi.encodePacked(base, _tokenURI));
+        // If there is no token URI, return the default URI.
+        if (bytes(_tokenURI).length == 0) {
+            return _baseURIExtended;
         }
 
-        return super.tokenURI(tokenId);
+        return _tokenURI;
     }
 
 
