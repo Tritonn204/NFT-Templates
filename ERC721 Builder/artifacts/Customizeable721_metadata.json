@@ -19,7 +19,7 @@
 					},
 					{
 						"internalType": "string",
-						"name": "baseURI",
+						"name": "defaultURI",
 						"type": "string"
 					},
 					{
@@ -230,25 +230,6 @@
 			{
 				"inputs": [
 					{
-						"internalType": "address",
-						"name": "owner",
-						"type": "address"
-					}
-				],
-				"name": "balanceOfCredit",
-				"outputs": [
-					{
-						"internalType": "uint256",
-						"name": "",
-						"type": "uint256"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
 						"internalType": "uint256",
 						"name": "tokenId",
 						"type": "uint256"
@@ -326,19 +307,6 @@
 				"name": "mint",
 				"outputs": [],
 				"stateMutability": "payable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "uint256",
-						"name": "amount",
-						"type": "uint256"
-					}
-				],
-				"name": "mintCredit",
-				"outputs": [],
-				"stateMutability": "nonpayable",
 				"type": "function"
 			},
 			{
@@ -499,11 +467,11 @@
 				"inputs": [
 					{
 						"internalType": "string",
-						"name": "baseURI",
+						"name": "defaultURI",
 						"type": "string"
 					}
 				],
-				"name": "setBaseURI",
+				"name": "setDefaultURI",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -793,11 +761,11 @@
 	},
 	"sources": {
 		"ERC721 Builder/CustomERC721.sol": {
-			"keccak256": "0x0cc987fafb95b0464af1c416f977465fffb7b0953e5c6a68957c603fc4bf58e9",
+			"keccak256": "0xd8afe080b8c335b3b5fe04bd158c215971eb5dfcfca274bc5e737b85f0c14cbc",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://ee9318643f14b2e96ae37823f9bdba2b07872a2a37f4c2bb2f00fd385d17260e",
-				"dweb:/ipfs/QmdeExiNxkP8CL4pmuKT3LrM12Ko1nezQUawG4SbB5b7NM"
+				"bzz-raw://8e4b60903ca743bd572d265149b7e72ec160cc9ac6c1d0600ae394e1e9786718",
+				"dweb:/ipfs/QmRQS6U6QRKUZztCEtMjLLQimXfHhXjcEtSHa7LeMnUsiP"
 			]
 		}
 	},

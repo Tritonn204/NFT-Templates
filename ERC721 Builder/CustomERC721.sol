@@ -1293,12 +1293,16 @@ abstract contract ERC721URIStorage is ERC721 {
 }
 
 /**
- * @title WeaponizedCountries contract
+ * @title CustomizeableERC721 contract
  * @dev Extends ERC721 Non-Fungible Token Standard basic implementation
  */
-contract Customizeable721 is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
-    string private _baseURIExtended = "";
+contract CustomizeableERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
+    address private _nftBuilder; //The public key of the NFT building/handling backend. Private key must be securely stored by the app
+    string private _baseURIExtended = ""; //URL to placeholder JSON metadata as the true image is built
 
+    uint256 private immutable _layerCount; //IMPORTANT! The amount of layers that compose a fully decked instance of this NFT
+
+    mapping(uint256 => string) private _tokenURIs; //Individual metadata storage for every tokenId
     uint256 public immutable MAX_Supply; //Max NFT Supply
     uint256 public immutable maxPerTx; //Max allowed mints per transaction
     uint256 public immutable mintsPerWallet; //Max allowed mints per wallet
@@ -1311,15 +1315,31 @@ contract Customizeable721 is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable
     mapping(address => uint256) userCredit; //Free mint credits tracked here
     mapping(address => uint256) public _mintedAmount; //Storage for how many paid mints a wallet has performed
 
-    mapping(uint256 => uint256[]) traits;
+    event CustomMint(address indexed _from, uint256[] _traits, uint _tokenId); //Event for the NFT builder to listen for
 
-    constructor(string memory name, string memory symbol, string memory baseURI, uint256 priceWei, uint256 supply, uint256 mintsPerTx, uint256 walletAllowance) ERC721(name, symbol) {
+    mapping(uint256 => uint256[]) _traits; //Composition index for the custom NFTs
+
+    constructor(string memory name, 
+        string memory symbol, 
+        string memory defaultURI, 
+        uint256 priceWei, 
+        uint256 supply, 
+        uint256 mintsPerTx, 
+        uint256 layerCount,
+        uint256 walletAllowance
+    ) ERC721(name, symbol) {
         MAX_Supply = supply;
         maxPerTx = mintsPerTx;
         mintsPerWallet = walletAllowance;
+
+        _layerCount = layerCount;
         
-        setBaseURI(baseURI);
+        setDefaultURI(defaultURI);
         setPriceWei(priceWei);
+    }
+
+    function setNftBuilder(address newBuilder) public onlyOwner {
+        _nftBuilder = newBuilder;
     }
 
     function setPriceWei(uint256 newPrice) public onlyOwner {
@@ -1375,32 +1395,40 @@ contract Customizeable721 is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable
         return uint256(keccak256(abi.encodePacked(block.difficulty, block.timestamp)));
     }
 
-    function mint(uint256 mintAmount) public payable {
+    function mint(uint256 mintAmount, uint256[] calldata chosenTraits) public payable {
+        require(mintAmount > 0);
         require(hasSaleStarted == true, "Minting is not currently enabled");
         require(totalSupply() + mintAmount <= MAX_Supply, "Exceeds MAX_Supply");
         require(_mintedAmount[msg.sender] < mintsPerWallet, "mintsPerWallet exceeded");
-        require(mintAmount <= mintsPerWallet, "mintsPerTx exceeded");
-        
-        require(mintAmount <= maxPerTx);
-        
+        require(mintAmount <= maxPerTx, "maxPerTx exceeded");
+        require(chosenTraits.length == _layerCount, "Incorrect amount of traits specified");
         
         for (uint i = 0; i < mintAmount; i++) {
-            _safeMint(msg.sender, genID());
+            uint256 tokenId = genID();
+            _safeMint(msg.sender, tokenId);
+            _traits[tokenId] = chosenTraits;
             scopeIndex++;
+            
+            emit CustomMint(msg.sender, chosenTraits, tokenId);
         }
     }
+
+    function setTokeURI(uint256 tokenId, string calldata URI) public {
+        require(msg.sender == _nftBuilder || msg.sender == owner(), "only the authorized builder or contract owner may set URI");
+        _setTokenURI(tokenId, URI);
+    }
     
-    function mintCredit(uint256 amount) public {
+    function mintCredit(uint256[] calldata chosenTraits) public {
         require(hasSaleStarted == true, "Minting is not currently enabled");
-        require(totalSupply() + amount <= MAX_Supply, "Exceeds MAX_Supply");
-        require(userCredit[msg.sender] >= amount, "Not enough Credits");
+        require(totalSupply() < MAX_Supply, "Exceeds MAX_Supply");
+        require(userCredit[msg.sender] >= 1, "Not enough Credits");
 
-        for (uint i = 0; i < amount; i++) {
-            _safeMint(msg.sender, genID());
-            scopeIndex++;
-        }
+        uint256 tokenId = genID();
+        _safeMint(msg.sender, tokenId);
+        scopeIndex++;
+        emit CustomMint(msg.sender, chosenTraits, tokenId);
 
-        userCredit[msg.sender] -= amount;
+        userCredit[msg.sender] -= 1;
     }
 
     function balanceOfCredit(address owner) public view virtual returns (uint256) {
@@ -1408,8 +1436,8 @@ contract Customizeable721 is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable
         return userCredit[owner];
     }
 
-    function setBaseURI(string memory baseURI) public onlyOwner {
-        _baseURIExtended = baseURI;
+    function setDefaultURI(string memory defaultURI) public onlyOwner {
+        _baseURIExtended = defaultURI;
     }
 
     function _baseURI() internal view virtual override returns (string memory) {
@@ -1444,14 +1472,24 @@ contract Customizeable721 is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable
         super._burn(tokenId);
     }
 
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        override(ERC721, ERC721URIStorage)
-        returns (string memory)
-    {
+    function tokenURI(uint256 tokenId) public view virtual override(ERC721, ERC721URIStorage) returns (string memory) {
+        require(_exists(tokenId), "ERC721URIStorage: URI query for nonexistent token");
+
+        string memory _tokenURI = _tokenURIs[tokenId];
+        string memory base = _baseURI();
+
+        // If there is no base URI, return the token URI.
+        if (bytes(base).length == 0) {
+            return _tokenURI;
+        }
+        // If both are set, concatenate the baseURI and tokenURI (via abi.encodePacked).
+        if (bytes(_tokenURI).length > 0) {
+            return string(abi.encodePacked(base, _tokenURI));
+        }
+
         return super.tokenURI(tokenId);
     }
+
 
     function supportsInterface(bytes4 interfaceId)
         public
