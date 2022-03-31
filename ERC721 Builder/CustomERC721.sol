@@ -1413,7 +1413,7 @@ contract CustomizeableERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, Owna
         }
     }
 
-    function setTokeURI(uint256 tokenId, string calldata URI) public {
+    function setTokenURI(uint256 tokenId, string calldata URI) public {
         require(msg.sender == _nftBuilder || msg.sender == owner(), "only the authorized builder or contract owner may set URI");
         _setTokenURI(tokenId, URI);
     }

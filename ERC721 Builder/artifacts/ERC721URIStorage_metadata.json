@@ -405,11 +405,11 @@
 	},
 	"sources": {
 		"ERC721 Builder/CustomERC721.sol": {
-			"keccak256": "0x24e1cf86f7a5bd1782e13c5bea29a14ae45f21cc989998a337dd232bd0f890f4",
+			"keccak256": "0x08fd8f8fcc6f67c7baad6c68d35149a496ae2d6df0ebc288adcba2448d0aae58",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://fb0b295262f0c2b399906858f66499950d7f3d7571f6e25fa9850330bebbde11",
-				"dweb:/ipfs/QmdHfbmcktqHcbGABvugWNfF1dXAc1R6THD4mkcG81y6ke"
+				"bzz-raw://9002afbf121cd8b21331947047bd54eda756a942d973e14689c4d8191bf4fcca",
+				"dweb:/ipfs/QmZKGrDbzsHhHxB5LtFLArKaZAPDTNHw7Mc7PuV7eS1MLM"
 			]
 		}
 	},
