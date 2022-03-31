@@ -1298,21 +1298,19 @@ abstract contract ERC721URIStorage is ERC721 {
  */
 contract Customizeable721 is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
     string private _baseURIExtended = "";
-    uint256 public immutable MAX_Supply;
-    uint256 public immutable maxPerTx;
-    uint256 public immutable mintsPerWallet;
 
-    uint256 public price;
-    bool public hasSaleStarted = false;
+    uint256 public immutable MAX_Supply; //Max NFT Supply
+    uint256 public immutable maxPerTx; //Max allowed mints per transaction
+    uint256 public immutable mintsPerWallet; //Max allowed mints per wallet
+    uint256 public price; //mint price in wei, can be altered via setPrice()
+
+    bool public hasSaleStarted = false; //Pauses/unpauses minting
     
-    uint256 private scopeIndex = 0;
-    uint256 private omitIndex = 0;
-    uint256 private ownerIndex = 0;
-        
-    bool private omitted = false;
+    uint256 private scopeIndex = 0; //Clamping cache for random TokenID generation in the anti-sniping algo    
+    mapping(uint256 => uint256) swappedIDs; //TokenID cache for random TokenID generation in the anti-sniping algo
+    mapping(address => uint256) userCredit; //Free mint credits tracked here
+    mapping(address => uint256) public _mintedAmount; //Storage for how many paid mints a wallet has performed
 
-    mapping(uint256 => uint256) swappedIDs;
-    mapping(address => uint256) userCredit;
     mapping(uint256 => uint256[]) traits;
 
     constructor(string memory name, string memory symbol, string memory baseURI, uint256 priceWei, uint256 supply, uint256 mintsPerTx, uint256 walletAllowance) ERC721(name, symbol) {
@@ -1378,8 +1376,10 @@ contract Customizeable721 is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable
     }
 
     function mint(uint256 mintAmount) public payable {
-        require(hasSaleStarted == true, "Sale hasn't started");
+        require(hasSaleStarted == true, "Minting is not currently enabled");
         require(totalSupply() + mintAmount <= MAX_Supply, "Exceeds MAX_Supply");
+        require(_mintedAmount[msg.sender] < mintsPerWallet, "mintsPerWallet exceeded");
+        require(mintAmount <= mintsPerWallet, "mintsPerTx exceeded");
         
         require(mintAmount <= maxPerTx);
         
@@ -1391,7 +1391,7 @@ contract Customizeable721 is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable
     }
     
     function mintCredit(uint256 amount) public {
-        require(hasSaleStarted == true, "Sale hasn't started");
+        require(hasSaleStarted == true, "Minting is not currently enabled");
         require(totalSupply() + amount <= MAX_Supply, "Exceeds MAX_Supply");
         require(userCredit[msg.sender] >= amount, "Not enough Credits");
 
@@ -1408,7 +1408,6 @@ contract Customizeable721 is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable
         return userCredit[owner];
     }
 
-    // Owner Functions
     function setBaseURI(string memory baseURI) public onlyOwner {
         _baseURIExtended = baseURI;
     }
@@ -1418,7 +1417,6 @@ contract Customizeable721 is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable
     }
 
     function startSale() public onlyOwner {
-        require(omitted == true, "tokenIDs minted on Ethereum have not yet been excluded");
         hasSaleStarted = true;
     }
     
@@ -1430,6 +1428,7 @@ contract Customizeable721 is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable
         payable(msg.sender).transfer(address(this).balance);
     }
     
+    //Overrides for ERC721 extensions
     function addCredit(address owner, uint256 credits) public onlyOwner {
         userCredit[owner] += credits;
     }
