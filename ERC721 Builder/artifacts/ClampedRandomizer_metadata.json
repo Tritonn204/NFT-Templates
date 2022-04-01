@@ -30,7 +30,7 @@
 	},
 	"settings": {
 		"compilationTarget": {
-			"ERC721 Builder/CustomERC721.sol": "ClampedRandomizer"
+			"ERC721 Builder/ClampedRandomizer.sol": "ClampedRandomizer"
 		},
 		"evmVersion": "london",
 		"libraries": {},
@@ -44,12 +44,12 @@
 		"remappings": []
 	},
 	"sources": {
-		"ERC721 Builder/CustomERC721.sol": {
-			"keccak256": "0x25966f1c440eb41eb42b573b6e5393f1a306f42581ea51b6580e95653cd41243",
+		"ERC721 Builder/ClampedRandomizer.sol": {
+			"keccak256": "0x5ef58e2a65d89e0d59a54bf9cb262f66e904529a03ad08cc14cd2cb6b7afd7bb",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://b8900ac789ad2a4aeeab27ea6bb3223c7e39fa736fa89e9bafaefa781fd38326",
-				"dweb:/ipfs/QmPRSzip5RTKs44fsLDDAoDkmD6YE6jNzRTRdMSWs9Rzuy"
+				"bzz-raw://09e74262ef0081a89588e7484022b53be24b9e54d67cb04c3731bec7bc5eddd8",
+				"dweb:/ipfs/Qmao8xBphe4tD2TvpnSnGuKELkJ6aHd8K7UCNSqSd8PdcE"
 			]
 		}
 	},

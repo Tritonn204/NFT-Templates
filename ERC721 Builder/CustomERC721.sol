@@ -1322,12 +1322,16 @@ contract NFTCombinationManagement {
 }
 
 //Written by Tritonn in 2021/2022
+
 //A nifty algorithm for setting up a pool of possible numbers, and selecting them pseudo-randomly
 //Each number in the pool is only ever used once, and the order is not predetermined
 
 /*
 Integrate this by having your contract extend this (ex: "contract Util is ClampedRandomizer {}")
-and instantiating an instance in it's constructor (ex: "constructor(uint256 size) ClampedRandomizer(size)").
+and instantiating an instance in it's constructor (ex: "constructor(uint256 size) ClampedRandomizer(size);") OR
+
+By creating is as an object instance (ex: "ClampedRandomizer TokenIDGen = ClampedRandomizer(maxSupply);" 
+then use "uint256 tokenId = tokenIDGen._genClampedNonce(); to randomly order the mints of an ERC721Enumerable contract"
 
 The generated results will range from 0-size, and can be acquired by calling _genClampedNonce() in your contract.
 */
