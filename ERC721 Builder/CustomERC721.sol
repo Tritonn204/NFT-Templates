@@ -1249,16 +1249,11 @@ abstract contract ERC721URIStorage is ERC721 {
         string memory _tokenURI = _tokenURIs[tokenId];
         string memory base = _baseURI();
 
-        // If there is no base URI, return the token URI.
-        if (bytes(base).length == 0) {
-            return _tokenURI;
-        }
-        // If both are set, concatenate the baseURI and tokenURI (via abi.encodePacked).
-        if (bytes(_tokenURI).length > 0) {
-            return string(abi.encodePacked(base, _tokenURI));
+        if (bytes(_tokenURI).length == 0) {
+            return base;
         }
 
-        return super.tokenURI(tokenId);
+        return _tokenURI;
     }
 
     /**
@@ -1302,8 +1297,8 @@ contract NFTCombinationManagement {
         bool limited;
     }
     
-    function _setAttributeConstraints(uint256[] memory chosenTraits) internal virtual {
-        _attributeCounts = chosenTraits;
+    function _setAttributeConstraints(uint256[] memory versionsPerTrait) internal virtual {
+        _attributeCounts = versionsPerTrait;
     }
 
     
@@ -1322,16 +1317,12 @@ contract NFTCombinationManagement {
 }
 
 //Written by Tritonn in 2021/2022
-
 //A nifty algorithm for setting up a pool of possible numbers, and selecting them pseudo-randomly
 //Each number in the pool is only ever used once, and the order is not predetermined
 
 /*
 Integrate this by having your contract extend this (ex: "contract Util is ClampedRandomizer {}")
-and instantiating an instance in it's constructor (ex: "constructor(uint256 size) ClampedRandomizer(size);") OR
-
-By creating is as an object instance (ex: "ClampedRandomizer TokenIDGen = ClampedRandomizer(maxSupply);" 
-then use "uint256 tokenId = tokenIDGen._genClampedNonce(); to randomly order the mints of an ERC721Enumerable contract"
+and instantiating an instance in it's constructor (ex: "constructor(uint256 size) ClampedRandomizer(size)").
 
 The generated results will range from 0-size, and can be acquired by calling _genClampedNonce() in your contract.
 */
@@ -1387,9 +1378,6 @@ contract CustomizeableERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, NFTC
     //IMPORTANT! NFT generation constraints
     uint256 private immutable _layerCount; //The amount of layers that compose a fully decked instance of this NFT
     
-    mapping(uint256 => string) private _tokenURIs; //Individual metadata storage for every tokenId
-
-
     uint256 public immutable MAX_Supply; //Max NFT Supply
     uint256 public immutable maxPerTx; //Max allowed mints per transaction
     uint256 public immutable mintsPerWallet; //Max allowed mints per wallet
@@ -1400,7 +1388,7 @@ contract CustomizeableERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, NFTC
     mapping(address => uint256) userCredit; //Free mint credits tracked here
     mapping(address => uint256) public _mintedAmount; //Storage for how many paid mints a wallet has performed
 
-    event CustomMint(address indexed _from, uint256[] _traits, uint _tokenId); //Event for the NFT builder to listen for
+    event CustomMint(address indexed _from, uint256[] _traits, uint256 _tokenId); //Event for the NFT builder to listen for
 
     mapping(uint256 => uint256[]) _traits; //Composition index for the custom NFTs
 
@@ -1423,12 +1411,13 @@ contract CustomizeableERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, NFTC
         setPriceWei(priceWei);
     }
 
+    //define NFT building server app's public key
     function setNftBuilder(address newBuilder) public onlyOwner {
         _nftBuilder = newBuilder;
     }
 
-    function setAttributeConstraints(uint256[] memory chosenTraits) public onlyOwner {
-        _setAttributeConstraints(chosenTraits);
+    function setAttributeConstraints(uint256[] memory versionsPerTrait) public onlyOwner {
+        _setAttributeConstraints(versionsPerTrait);
     }
 
     function setCombinationLimit(uint256[] calldata chosenTraits, uint32 limit) public onlyOwner {
@@ -1469,6 +1458,7 @@ contract CustomizeableERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, NFTC
         require(totalSupply() + mintAmount <= MAX_Supply, "Exceeds MAX_Supply");
         require(_mintedAmount[msg.sender] < mintsPerWallet, "mintsPerWallet exceeded");
         require(mintAmount <= maxPerTx, "maxPerTx exceeded");
+        require(msg.value == price*mintAmount, "Incorrect msg.value");
         require(chosenTraits.length == _layerCount, "Incorrect amount of traits specified");
 
         bytes32 comboHash = keccak256(abi.encodePacked(chosenTraits));
@@ -1489,7 +1479,7 @@ contract CustomizeableERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, NFTC
 
     function setTokenURI(uint256 tokenId, string calldata URI) public {
         require(msg.sender == _nftBuilder || msg.sender == owner(), "only the authorized builder or contract owner may set URI");
-        _setTokenURI(tokenId, URI);
+        super._setTokenURI(tokenId, URI);
     }
     
     function mintCredit(uint256[] calldata chosenTraits) public {
@@ -1554,17 +1544,13 @@ contract CustomizeableERC721 is ERC721, ERC721Enumerable, ERC721URIStorage, NFTC
         super._burn(tokenId);
     }
 
-    function tokenURI(uint256 tokenId) public view virtual override(ERC721, ERC721URIStorage) returns (string memory) {
-        require(_exists(tokenId), "ERC721URIStorage: URI query for nonexistent token");
-
-        string memory _tokenURI = _tokenURIs[tokenId];
-
-        // If there is no token URI, return the default URI.
-        if (bytes(_tokenURI).length == 0) {
-            return _baseURIExtended;
-        }
-
-        return _tokenURI;
+    function tokenURI(uint256 tokenId)
+        public
+        view
+        override(ERC721, ERC721URIStorage)
+        returns (string memory)
+    {
+        return super.tokenURI(tokenId);
     }
 
 
