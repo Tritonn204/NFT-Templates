@@ -43,7 +43,7 @@
 	},
 	"settings": {
 		"compilationTarget": {
-			"ERC721 Builder/CustomERC721.sol": "IERC165"
+			"ERC721 Builder/COTC2Custom.sol": "IERC165"
 		},
 		"evmVersion": "london",
 		"libraries": {},
@@ -57,12 +57,12 @@
 		"remappings": []
 	},
 	"sources": {
-		"ERC721 Builder/CustomERC721.sol": {
-			"keccak256": "0x5f999ce1391fd04b8fe696e8eb4b5e3a5b50316729c8ff08fe3e679eb9851c19",
+		"ERC721 Builder/COTC2Custom.sol": {
+			"keccak256": "0x5e6730c09ca2354ace61dbc19e8d5ec6716bcbbdea8771ae31c657e7338d9f42",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://f17aa0bed1665d4e92ad729c2c3a733867f662d3ab3ba5cadefaa0953730a20d",
-				"dweb:/ipfs/QmfX4sWdVNYQbN4uGXE7or2RJBWkQarjLvSm1NTH6DYKhW"
+				"bzz-raw://3842ced2ed2c879058028e782c8027ce44994bc10431705bb4c8a9d10dfbd760",
+				"dweb:/ipfs/QmefwYCEMv3FJkc7xp3QNKVTU8ri2rU9Pcmk99kjVTMQ5V"
 			]
 		}
 	},

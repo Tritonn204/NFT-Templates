@@ -46,6 +46,11 @@
 						"internalType": "uint256",
 						"name": "walletAllowance",
 						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "burnAmount",
+						"type": "uint256"
 					}
 				],
 				"stateMutability": "nonpayable",
@@ -184,6 +189,19 @@
 				"type": "function"
 			},
 			{
+				"inputs": [],
+				"name": "_COTC2",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
 				"inputs": [
 					{
 						"internalType": "uint256",
@@ -192,6 +210,19 @@
 					}
 				],
 				"name": "_attributeCounts",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "_burnAmount",
 				"outputs": [
 					{
 						"internalType": "uint256",
@@ -410,18 +441,23 @@
 				"inputs": [
 					{
 						"internalType": "uint256",
-						"name": "mintAmount",
+						"name": "",
 						"type": "uint256"
 					},
 					{
 						"internalType": "uint256[]",
 						"name": "chosenTraits",
 						"type": "uint256[]"
+					},
+					{
+						"internalType": "uint256[]",
+						"name": "tokensToBurn",
+						"type": "uint256[]"
 					}
 				],
 				"name": "mint",
 				"outputs": [],
-				"stateMutability": "payable",
+				"stateMutability": "nonpayable",
 				"type": "function"
 			},
 			{
@@ -600,6 +636,19 @@
 					}
 				],
 				"name": "setAttributeConstraints",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "nftContract",
+						"type": "address"
+					}
+				],
+				"name": "setCOTC2",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -860,13 +909,6 @@
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
-			},
-			{
-				"inputs": [],
-				"name": "withdrawAll",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
 			}
 		],
 		"devdoc": {
@@ -936,7 +978,7 @@
 	},
 	"settings": {
 		"compilationTarget": {
-			"ERC721 Builder/CustomERC721.sol": "CustomizeableERC721"
+			"ERC721 Builder/COTC2Custom.sol": "CustomizeableERC721"
 		},
 		"evmVersion": "london",
 		"libraries": {},
@@ -950,12 +992,12 @@
 		"remappings": []
 	},
 	"sources": {
-		"ERC721 Builder/CustomERC721.sol": {
-			"keccak256": "0x5f999ce1391fd04b8fe696e8eb4b5e3a5b50316729c8ff08fe3e679eb9851c19",
+		"ERC721 Builder/COTC2Custom.sol": {
+			"keccak256": "0x36308fae6cb31e8318709869f0212252e6431c0ca92ee0c8e822395667150bc9",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://f17aa0bed1665d4e92ad729c2c3a733867f662d3ab3ba5cadefaa0953730a20d",
-				"dweb:/ipfs/QmfX4sWdVNYQbN4uGXE7or2RJBWkQarjLvSm1NTH6DYKhW"
+				"bzz-raw://d56b9e0ca69a88252ab2a6508aef8c51d0bbca9c6597e47c147411ab903b7fcd",
+				"dweb:/ipfs/QmSf9EVravTsZYM7AoVed8J9E8YCVKZyshygZGMkza57h3"
 			]
 		}
 	},
